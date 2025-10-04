@@ -25,12 +25,13 @@ const STRIPE_PRICE_ID_YEARLY = process.env.STRIPE_PRICE_ID_YEARLY || '';
 const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET || '';
 const stripe = STRIPE_SECRET ? new Stripe(STRIPE_SECRET, { apiVersion: '2023-10-16' }) : null;
 
-if (VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY) {
+if (VAPID_PUBLIC_KEY && VAPID_PUBLIC_KEY.length > 60 && VAPID_PRIVATE_KEY) {
   webpush.setVapidDetails('mailto:you@example.com', VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
   console.log('Web Push: habilitado');
 } else {
-  console.log('Web Push: DESABILITADO (sem VAPID keys)');
+  console.log('Web Push: DESABILITADO (sem VAPID keys válidas)');
 }
+
 
 
 app.use(express.json());
