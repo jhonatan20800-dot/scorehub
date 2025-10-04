@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="theme-color" content="#0b0b0d" />
+  <title>ScoreHub • Gold Premium</title>
+  <meta name="description" content="ScoreHub — API-Football + Stripe assinaturas + Push. DEMO automático caso a API não responda." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <script src="/env.js"></script>
+  <style>
+    :root{ --bg:#0b0b0d;--bg2:#101015;--surface:#15151c;--text:#eef0f4;--muted:#a7a9b4; --gold:#d4af37;--red:#ff5050;--shadow:0 18px 60px rgba(0,0,0,.45); --radius:18px; --safe: env(safe-area-inset-bottom); }
+    *{box-sizing:border-box} html,body{height:100%}
+    body{margin:0;background:radial-gradient(1200px 600px at 120% -10%, rgba(212,175,55,.12), transparent 60%), radial-gradient(800px 400px at -10% 110%, rgba(212,175,55,.08), transparent 60%),var(--bg);color:var(--text); font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+    .wrap{max-width:1180px;margin:0 auto;padding:16px}
+    .header{position:sticky;top:0;z-index:40;backdrop-filter:blur(10px) saturate(1.2); background:linear-gradient(180deg, rgba(10,10,12,.85), rgba(10,10,12,.5));border-bottom:1px solid rgba(212,175,55,.2)}
+    .nav{display:flex;align-items:center;gap:12px;padding:10px 16px}
+    .badge{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:900;color:#111;padding:6px 10px;border-radius:999px; background:linear-gradient(135deg,#f7e7a3,#d4af37);border:1px solid rgba(185,151,36,.6)}
+    .btn{border:none;border-radius:12px;padding:12px 16px;font-weight:700;cursor:pointer;box-shadow:var(--shadow);min-height:44px}
+    .btn-gold{background:linear-gradient(135deg,#f7e7a3,#d4af37);color:#1a1a1a;border:1px solid rgba(185,151,36,.55)}
+    .btn-ghost{background:transparent;color:var(--text);border:1px solid rgba(212,175,55,.25)}
+    .grid{display:grid;grid-template-columns:1fr;gap:10px}
+    .card{position:relative;border-radius:var(--radius);background:linear-gradient(180deg, rgba(20,20,27,.95), rgba(20,20,27,.85)); border:1px solid rgba(212,175,55,.18);box-shadow:var(--shadow);overflow:hidden}
+    .card-h{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid rgba(212,175,55,.12)}
+    .teams{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;padding:12px 14px}
+    .team{display:flex;align-items:center;gap:10px;min-width:0}
+    .crest{width:28px;height:28px;border-radius:999px;background:linear-gradient(145deg,#22222a,#0f0f12);border:1px solid rgba(212,175,55,.25);display:grid;place-items:center;font-size:12px}
+    .name{font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .score{font-weight:900;font-size:22px;padding:8px 10px;border-radius:12px;background:rgba(255,255,255,.02);border:1px solid rgba(212,175,55,.2)}
+    .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:0 14px 12px}
+    .stat{background:rgba(255,255,255,.02);border:1px solid rgba(212,175,55,.15);border-radius:12px;padding:10px;text-align:center}
+    .sticky{position:fixed;inset:auto 0 0 0;background:linear-gradient(180deg, rgba(10,10,12,.1), rgba(10,10,12,.92)); border-top:1px solid rgba(212,175,55,.18);backdrop-filter:blur(10px);z-index:60;padding-bottom:max(6px, var(--safe))}
+    .sticky-in{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:10px 14px}
+    .plans{display:flex;gap:10px;align-items:center}
+    .plan{border:1px solid rgba(212,175,55,.25);border-radius:12px;padding:10px 12px;cursor:pointer}
+    .plan.active{border-color:rgba(212,175,55,.7);background:linear-gradient(135deg, rgba(212,175,55,.18), rgba(212,175,55,.06))}
+    .banner{margin:10px 0 0;padding:10px 12px;border:1px solid rgba(46,204,113,.4);border-radius:12px;background:linear-gradient(135deg,rgba(46,204,113,.25),rgba(46,204,113,.1));display:flex;gap:10px;align-items:center}
+    .banner b{color:#b9ffca}
+    @media(min-width:720px){ .grid{grid-template-columns:repeat(2,1fr)} }
+    @media(min-width:1024px){ .grid{grid-template-columns:repeat(3,1fr)} }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="nav wrap">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span class="badge">GOLD</span>
+        <div><b>ScoreHub • Premium</b><br><small style="color:#a7a9b4">Brasileirão + Europa ao vivo</small></div>
+      </div>
+      <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+        <button class="btn btn-ghost" id="btnNotif">Notificações</button>
+        <div class="plans" id="planSelector" aria-label="Escolha do plano">
+          <button class="plan active" data-plan="monthly">Mensal</button>
+          <button class="plan" data-plan="yearly" title="2 meses grátis no anual">Anual</button>
+        </div>
+        <button class="btn btn-gold" id="btnSubscribe">Assinar Gold</button>
+      </div>
+    </div>
+    <div class="wrap banner">
+      <span>💎</span>
+      <div><b>Gold Premium Anual</b> — pague <b>10 meses</b>, leve <b>12</b>. Melhor custo-benefício pra quem acompanha toda a temporada.</div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div style="display:flex;gap:8px;margin:14px 0">
+      <select id="league">
+        <option value="ALL">Todas</option>
+        <option value="71">Série A</option>
+        <option value="39">Premier League</option>
+        <option value="140">La Liga</option>
+        <option value="135">Serie A ITA</option>
+        <option value="78">Bundesliga</option>
+        <option value="61">Ligue 1</option>
+        <option value="2">UCL</option>
+      </select>
+      <input id="q" type="search" placeholder="Buscar time/partida" style="flex:1"/>
+    </div>
+
+    <div id="grid" class="grid"></div>
+
+    <div class="sticky">
+      <div class="sticky-in wrap">
+        <div><span class="badge">Bônus</span> <small style="color:#a7a9b4">Ganhe bônus no 1º depósito</small></div>
+        <div style="display:flex;gap:8px">
+          <a class="btn btn-ghost" id="btnDownload">Baixar App</a>
+          <a class="btn btn-gold" id="btnAffiliate2" target="_blank" rel="nofollow noopener">Apostar agora</a>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Match Center -->
+  <aside id="sheet" style="position:fixed;left:0;right:0;bottom:0;top:30%;background:#15151c;border-top:1px solid rgba(212,175,55,.25);border-radius:24px 24px 0 0;transform:translateY(100%);transition:transform .3s;z-index:70">
+    <div class="wrap" style="display:flex;align-items:center;justify-content:space-between;padding:16px 16px 8px">
+      <strong id="mcTitle">Match Center</strong>
+      <div style="display:flex;gap:8px">
+        <a class="btn btn-gold" id="mcBet" target="_blank" rel="nofollow noopener">Apostar nesta partida</a>
+        <button class="btn btn-ghost" id="closeSheet">Fechar</button>
+      </div>
+    </div>
+    <div class="wrap" style="display:grid;gap:12px;max-height:60vh;overflow:auto;padding-bottom:24px">
+      <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px">
+        <div class="stat"><div>Posse</div><div class="v">—</div></div>
+        <div class="stat"><div>Chutes</div><div class="v">—</div></div>
+        <div class="stat"><div>No gol</div><div class="v">—</div></div>
+        <div class="stat"><div>Posse</div><div class="v">—</div></div>
+        <div class="stat"><div>Chutes</div><div class="v">—</div></div>
+        <div class="stat"><div>No gol</div><div class="v">—</div></div>
+      </div>
+      <div class="card" style="padding:12px">
+        <div class="card-h"><span class="badge">Odds (1x2)</span><small style="color:#a7a9b4">via API</small></div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+          <div class="stat"><div>Casa</div><b id="oddH">—</b></div>
+          <div class="stat"><div>Empate</div><b id="oddD">—</b></div>
+          <div class="stat"><div>Fora</div><b id="oddA">—</b></div>
+        </div>
+      </div>
+      <div class="card" style="padding:12px">
+        <div class="card-h"><span class="badge">Escalações</span><small style="color:#a7a9b4">mock</small></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div><h4 id="luHomeT">Time A</h4><ul id="luHome"></ul></div>
+          <div><h4 id="luAwayT">Time B</h4><ul id="luAway"></ul></div>
+        </div>
+      </div>
+      <div class="card" style="padding:12px">
+        <div class="card-h"><span class="badge">Timeline</span></div>
+        <div id="timeline" style="display:grid;gap:10px;padding-top:10px"></div>
+      </div>
+    </div>
+  </aside>
+
+  <script>
+    const AFFILIATE_URL = (window.__ENV && window.__ENV.AFFILIATE_URL) || 'https://seu-partner.com/?utm_source=scorehub';
+    ;['mcBet','btnAffiliate2'].forEach(id=>{ const el=document.getElementById(id); if(el) el.href=AFFILIATE_URL; });
+
+    const grid = document.getElementById('grid');
+    const league = document.getElementById('league');
+    const q = document.getElementById('q');
+    const sheet = document.getElementById('sheet');
+    const mcTitle = document.getElementById('mcTitle');
+    const oddH = document.getElementById('oddH'); const oddD = document.getElementById('oddD'); const oddA = document.getElementById('oddA');
+    const luHome = document.getElementById('luHome'); const luAway = document.getElementById('luAway'); const luHomeT = document.getElementById('luHomeT'); const luAwayT = document.getElementById('luAwayT');
+    const timeline = document.getElementById('timeline');
+
+    // ---- Plan selector (somente UI, checkout livre)
+    let currentPlan = 'monthly';
+    document.querySelectorAll('#planSelector .plan').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        document.querySelectorAll('#planSelector .plan').forEach(b=>b.classList.remove('active'));
+        btn.classList.add('active');
+        currentPlan = btn.dataset.plan;
+      });
+    });
+    document.getElementById('btnSubscribe').addEventListener('click', async ()=>{
+      try{
+        const priceId = currentPlan==='yearly'
+          ? ((window.__ENV && window.__ENV.STRIPE_PRICE_ID_YEARLY) || 'price_yearly_xxx')
+          : ((window.__ENV && window.__ENV.STRIPE_PRICE_ID_MONTHLY) || 'price_monthly_xxx');
+        const r = await fetch('/api/billing/checkout', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ priceId })
+        });
+        const j = await r.json(); if(!r.ok || !j.url){ alert(j.error || 'Falha ao criar checkout'); return; }
+        window.location = j.url;
+      }catch(e){ console.error(e); alert('Erro ao iniciar checkout'); }
+    });
+
+    let FIXTURES = []; let CURRENT_ID = null;
+
+    function genMock(count=6){
+      const teams = ['Real Madrid','Barcelona','PSG','Man City','Bayern','Dortmund','Inter','Milan','Flamengo','Palmeiras'];
+      const arr=[]; for(let i=0;i<count;i++){
+        const home = teams[Math.floor(Math.random()*teams.length)];
+        let away = teams[Math.floor(Math.random()*teams.length)]; if(away===home) away = 'Juventus';
+        arr.push({
+          id: 'm-'+i, league: 'Demo League', minute: `${30+Math.floor(Math.random()*15)}'`, status:'2ºT',
+          round:'R'+(10+i), date:new Date().toISOString(),
+          home:{ name:home, short:home.slice(0,3).toUpperCase() },
+          away:{ name:away, short:away.slice(0,3).toUpperCase() },
+          score:{ home: Math.floor(Math.random()*3), away: Math.floor(Math.random()*3) },
+        });
+      }
+      return arr;
+    }
+
+    async function loadFixtures(){
+      try{
+        const url = `/api/fixtures?league=${encodeURIComponent(league.value)}&q=${encodeURIComponent(q.value||'')}`;
+        const r = await fetch(url); const j = await r.json();
+        FIXTURES = (j && j.items && j.items.length) ? j.items : genMock(8); // fallback automático
+        render();
+      }catch(e){
+        FIXTURES = genMock(8); render();
+      }
+    }
+    async function loadOdds(id){
+      try{
+        const r = await fetch(`/api/odds?fixture=${id}`); const j = await r.json();
+        oddH.textContent = j.home || '-'; oddD.textContent = j.draw || '-'; oddA.textContent = j.away || '-';
+      }catch(e){ oddH.textContent=oddD.textContent=oddA.textContent='-'; }
+    }
+
+    function card(m){
+      return `
+      <article class="card">
+        <div class="card-h"><span class="badge">${m.league}</span><small>${m.minute||'-'}</small></div>
+        <div class="teams">
+          <div class="team"><div class="crest">${(m.home.short||'???')}</div><div class="name">${m.home.name}</div></div>
+          <div class="score">${m.score.home} : ${m.score.away}</div>
+          <div class="team" style="justify-content:flex-end"><div class="name" style="text-align:right">${m.away.name}</div><div class="crest">${(m.away.short||'???')}</div></div>
+        </div>
+        <div class="stats">
+          <div class="stat"><div>Rodada</div><div>${m.round||'-'}</div></div>
+          <div class="stat"><div>Data</div><div>${(m.date||'').slice(0,16).replace('T',' ')}</div></div>
+          <div class="stat"><div>Status</div><div>${m.status||'-'}</div></div>
+        </div>
+        <div style="display:flex;gap:8px;padding:12px 14px 14px">
+          <button class="btn btn-gold" onclick="openMatch('${m.id}')">Match Center</button>
+          <a class="btn btn-ghost" href="${AFFILIATE_URL}" target="_blank" rel="nofollow noopener">Apostar agora</a>
+        </div>
+      </article>`;
+    }
+
+    function render(){
+      const qv = (q.value||'').toLowerCase();
+      const list = FIXTURES.filter(m => (`${m.home.name} ${m.away.name} ${m.league}`).toLowerCase().includes(qv));
+      grid.innerHTML = list.length ? list.map(card).join('') : '<div style="opacity:.8;text-align:center;padding:24px;border:1px dashed rgba(212,175,55,.25);border-radius:12px">Sem partidas</div>';
+    }
+
+    async function openMatch(id){
+      const m = FIXTURES.find(x=>String(x.id)===String(id)); if(!m) return;
+      CURRENT_ID = id;
+      mcTitle.textContent = `${m.home.name} ${m.score.home} x ${m.score.away} ${m.away.name}`;
+      luHomeT.textContent = m.home.name; luAwayT.textContent = m.away.name;
+      luHome.innerHTML = Array.from({length:11}, (_,i)=>`<li>${m.home.name} #${i+1}</li>`).join('');
+      luAway.innerHTML = Array.from({length:11}, (_,i)=>`<li>${m.away.name} #${i+1}</li>`).join('');
+      timeline.innerHTML = (m.timeline||[`1' Início`,`35' GOL ${m.home.name}`,`65' GOL ${m.away.name}`]).map(t=>`<div>${t}</div>`).join('');
+      await loadOdds(id);
+      sheet.style.transform='translateY(0)';
+    }
+
+    document.getElementById('closeSheet').addEventListener('click',()=>{ sheet.style.transform='translateY(100%)' });
+
+    league.addEventListener('change', loadFixtures);
+    q.addEventListener('input', ()=>render());
+
+    // PUSH (VAPID via backend)
+    document.getElementById('btnNotif').addEventListener('click', async ()=>{
+      try{
+        const reg = await navigator.serviceWorker.register('/sw.js');
+        const perm = await Notification.requestPermission();
+        if(perm!=='granted'){ alert('Permissão negada'); return; }
+        const resp = await fetch('/api/push/public-key'); const { publicKey } = await resp.json();
+        const sub = await reg.pushManager.subscribe({ userVisibleOnly:true, applicationServerKey: urlBase64ToUint8Array(publicKey) });
+        await fetch('/api/push/subscribe', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(sub) });
+        reg.showNotification('ScoreHub', { body:'Notificações ativadas ✅' });
+      }catch(e){ console.error(e); alert('Falha ao ativar notificações'); }
+    });
+    function urlBase64ToUint8Array(base64String){ const padding = '='.repeat((4 - base64String.length % 4) % 4); const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/'); const rawData = atob(base64); const outputArray = new Uint8Array(rawData.length); for (let i=0;i<rawData.length;++i) outputArray[i] = rawData.charCodeAt(i); return outputArray; }
+
+    loadFixtures();
+  </script>
+</body>
+</html>
