@@ -1,0 +1,19 @@
+{
+  "name": "scorehub-gold-no-login-demo-default",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "NODE_ENV=development node server.js",
+    "gen:vapid": "node -e \"import('web-push').then(m=>{const k=m.default.generateVAPIDKeys();console.log(k)})\""
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "stripe": "^14.23.0",
+    "web-push": "^3.6.7",
+    "dotenv": "^16.4.5"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
